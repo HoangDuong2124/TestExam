@@ -1,6 +1,7 @@
 import { useEmployeeContext } from "../contexts/employeeContext";
-
 import { Link } from "react-router-dom";
+import { useState } from "react";
+
 const Read = () => {
   const {
     employee,
@@ -12,6 +13,10 @@ const Read = () => {
     setEmail,
     setAddress,
   } = useEmployeeContext();
+
+  const [sortBy, setSortBy] = useState(null); // 'name' | 'address' | null
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
+
   const handleSetValue = (id, name, gender, date, email, address) => {
     setId(id);
     setName(name);
@@ -20,11 +25,45 @@ const Read = () => {
     setEmail(email);
     setAddress(address);
   };
-    const handleDelete = (id,name) => {
-    const newEmployee = employee.filter((item) => item.id !== id);
-    window.confirm(`Bạn có chắc muốn xóa nhân viên ${name} không?`) && setEmployee(newEmployee);  
-    
+
+  const handleDelete = (id, name) => {
+    const confirmDelete = window.confirm(`Bạn có chắc muốn xóa nhân viên ${name} không?`);
+    if (confirmDelete) {
+      const newEmployee = employee.filter((item) => item.id !== id);
+      setEmployee(newEmployee);
     }
+  };
+
+  const handleSort = (column) => {
+    let newOrder = 'asc';
+    if (sortBy === column && sortOrder === 'asc') {
+      newOrder = 'desc';
+    }
+
+    setSortBy(column);
+    setSortOrder(newOrder);
+
+    const sorted = [...employee].sort((a, b) => {
+      let valA, valB;
+
+      if (column === 'name') {
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+      } else if (column === 'address') {
+        valA = a.address.toLowerCase();
+        valB = b.address.toLowerCase();
+      }
+
+      if (newOrder === 'asc') {
+        return valA < valB ? -1 : valA > valB ? 1 : 0;
+      } else {
+        return valA > valB ? -1 : valA < valB ? 1 : 0;
+      }
+    });
+
+    setEmployee(sorted);
+  };
+
   return (
     <>
       <h1 className="text-2xl font-bold text-red-400 text-center mb-5">
@@ -33,16 +72,33 @@ const Read = () => {
       <button className="w-20 px-2 py-0.5 bg-amber-700 rounded-lg text-white hover:text-slate-200 font-bold mb-1 cursor-pointer">
         <Link to="/create"> + Add </Link>
       </button>
-      <div className="w-full h-full overflow-auto ">
+
+      <div className="w-full h-full overflow-auto">
         <table className="w-full">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Name</th>
+              <th>
+                Name
+                <img
+                  className="w-[15px] inline-block ml-3 cursor-pointer"
+                  src="/sort_icon.svg"
+                  onClick={() => handleSort('name')}
+                  alt="sort name"
+                />
+              </th>
               <th>Date of Birth</th>
               <th>Gender</th>
               <th>Email</th>
-              <th>Address</th>
+              <th>
+                Address
+                <img
+                  className="w-[15px] inline-block ml-3 cursor-pointer"
+                  src="/sort_icon.svg"
+                  onClick={() => handleSort('address')}
+                  alt="sort address"
+                />
+              </th>
               <th>Update</th>
               <th>Delete</th>
             </tr>
@@ -73,11 +129,14 @@ const Read = () => {
                     Update
                   </Link>
                 </td>
-                <td onClick={()=>handleDelete(item.id,item.name)} className="text center">
+                <td
+                  onClick={() => handleDelete(item.id, item.name)}
+                  className="text-center cursor-pointer"
+                >
                   <img
                     className="w-4 cursor-pointer invert inline-block"
                     src="/bin_icon.svg"
-                    alt="bin"
+                    alt="delete"
                   />
                 </td>
               </tr>
